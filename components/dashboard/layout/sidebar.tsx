@@ -9,7 +9,7 @@ import {
   ChevronRight, LogOut, User, Moon, Sun, X
 } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useDashboard, type ActiveView, type Role } from "@/components/dashboard/dashboard-context"
+import { useDashboard, type ActiveView } from "@/components/dashboard/dashboard-context"
 import { cn } from "@/lib/utils"
 
 const OWNER_NAV = [
@@ -27,11 +27,10 @@ const NOMINEE_NAV = [
   { id: "history", label: "My Accesses", icon: History },
 ] as const
 
-const USER = { name: "Arjun Mehta", email: "arjun@example.com" }
 
 export function Sidebar() {
   const router = useRouter()
-  const { role, activeView, setActiveView, sidebarOpen, setSidebarOpen, profileOpen, setProfileOpen } = useDashboard()
+  const { user, role, activeView, setActiveView, sidebarOpen, setSidebarOpen, profileOpen, setProfileOpen } = useDashboard()
   const { resolvedTheme, setTheme } = useTheme()
   const [loggingOut, setLoggingOut] = useState(false)
   const nav = role === "owner" ? OWNER_NAV : NOMINEE_NAV
@@ -104,11 +103,11 @@ export function Sidebar() {
             className="flex w-full items-center gap-3 rounded-xl p-2.5 text-sm transition-colors hover:bg-muted/60"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-              {USER.name.split(" ").map(w => w[0]).join("")}
+              {user.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-semibold text-foreground">{USER.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{USER.email}</p>
+              <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
             <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", profileOpen && "rotate-90")} />
           </button>
@@ -123,8 +122,8 @@ export function Sidebar() {
                 className="absolute bottom-0 left-full ml-3 w-56 overflow-hidden rounded-xl border border-border/60 bg-popover shadow-xl"
               >
                 <div className="border-b border-border/40 px-3 py-2.5">
-                  <p className="text-xs font-semibold text-foreground">{USER.name}</p>
-                  <p className="text-xs text-muted-foreground">{USER.email}</p>
+                  <p className="text-xs font-semibold text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <div className="p-1.5 space-y-0.5">
                   <button className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs hover:bg-muted/60 text-foreground/80 hover:text-foreground">

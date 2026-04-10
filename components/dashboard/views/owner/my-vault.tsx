@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, Eye, EyeOff, Copy, Globe, CreditCard, Hotel, FileText, Lock, Check, Pencil, Trash2, ExternalLink, MoreHorizontal } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Plus, Search, Eye, EyeOff, Copy, Globe, CreditCard, Hotel, FileText, Lock, Check, Pencil, Trash2, ExternalLink, MoreHorizontal, X, Save } from "lucide-react"
 
 type Category = "all" | "credentials" | "bookings" | "banking" | "documents"
 
@@ -13,20 +14,33 @@ const CATEGORIES: { id: Category; label: string; icon: React.ElementType; count:
   { id: "documents", label: "Documents", icon: FileText, count: 2 },
 ]
 
+import data from "@/data.json"
+
+// Derive demo items from the first record in data.json
+const demoUser = data[0]
+
 const ITEMS = [
-  { id: 1, cat: "credentials", icon: "📧", title: "Gmail", username: "arjun@gmail.com", url: "gmail.com", updated: "2d ago" },
-  { id: 2, cat: "credentials", icon: "🎬", title: "Netflix", username: "arjun@gmail.com", url: "netflix.com", updated: "1w ago" },
-  { id: 3, cat: "credentials", icon: "💼", title: "LinkedIn", username: "arjun@example.com", url: "linkedin.com", updated: "5d ago" },
-  { id: 4, cat: "credentials", icon: "𝕏", title: "Twitter / X", username: "@arjunmehta_in", url: "x.com", updated: "2w ago" },
-  { id: 5, cat: "credentials", icon: "💻", title: "GitHub", username: "arjunmehta-dev", url: "github.com", updated: "1mo ago" },
-  { id: 6, cat: "credentials", icon: "🛒", title: "Amazon India", username: "arjun@gmail.com", url: "amazon.in", updated: "3d ago" },
-  { id: 7, cat: "bookings", icon: "🏨", title: "Marriott — New Delhi", username: "Booking #MBF-8823", url: "marriott.com", updated: "1mo ago" },
-  { id: 8, cat: "bookings", icon: "✈️", title: "IndiGo Frequent Flyer", username: "6E-FF-991827", url: "goindigo.in", updated: "3mo ago" },
-  { id: 9, cat: "banking", icon: "🏦", title: "SBI Net Banking", username: "Acc: ••••••4127", url: "onlinesbi.com", updated: "2d ago" },
-  { id: 10, cat: "banking", icon: "💳", title: "HDFC Credit Card", username: "Card ••••4892", url: "hdfcbank.com", updated: "1w ago" },
-  { id: 11, cat: "documents", icon: "🪪", title: "Aadhaar Card", username: "XXXX XXXX 8823", url: "uidai.gov.in", updated: "6mo ago" },
-  { id: 12, cat: "documents", icon: "📄", title: "PAN Card", username: "XXXXX1234X", url: "incometax.gov.in", updated: "6mo ago" },
+  // Banking
+  { id: 1, cat: "banking", icon: "🏦", title: "Bank Account", username: `Acc: ••••••${String(demoUser.Bank_Account).slice(-4)}`, url: "Bank", updated: "2d ago" },
+  { id: 2, cat: "banking", icon: "🏦", title: "IFSC Code", username: demoUser.IFSC || "—", url: "Bank", updated: "2d ago" },
+  { id: 3, cat: "banking", icon: "💳", title: "UPI ID", username: demoUser.UPI_ID || "—", url: "UPI", updated: "1w ago" },
+  
+  // Documents
+  { id: 4, cat: "documents", icon: "🪪", title: "Aadhaar Card", username: demoUser.Aadhar ? `XXXX XXXX ${String(demoUser.Aadhar).slice(-4)}` : "—", url: "uidai.gov.in", updated: "6mo ago" },
+  { id: 5, cat: "documents", icon: "📄", title: "PAN Card", username: demoUser.PAN || "—", url: "incometax.gov.in", updated: "6mo ago" },
+  { id: 6, cat: "documents", icon: "🪪", title: "Passport", username: demoUser.Passport || "—", url: "gov.in", updated: "1y ago" },
+  { id: 7, cat: "documents", icon: "🪪", title: "Driving License", username: demoUser.Driving_License || "—", url: "gov.in", updated: "2y ago" },
+  
+  // Insurance
+  { id: 8, cat: "documents", icon: "🛡️", title: "Insurance", username: `${demoUser.Insurance_Company || "LIC"} - ${demoUser.Insurance_ID || "—"}`, url: "Insurance", updated: "1mo ago" },
+
+  // Credentials (Socials or others)
+  { id: 9, cat: "credentials", icon: "📸", title: "Instagram", username: demoUser.Instagram ? `@${demoUser.Instagram}` : "—", url: "instagram.com", updated: "3d ago" },
+  { id: 10, cat: "credentials", icon: "👥", title: "Facebook", username: demoUser.Facebook || "—", url: "facebook.com", updated: "1w ago" },
+  { id: 11, cat: "credentials", icon: "𝕏", title: "Twitter", username: demoUser.Twitter || "—", url: "x.com", updated: "5d ago" },
+  { id: 12, cat: "credentials", icon: "👻", title: "Snapchat", username: demoUser.Snapchat || "—", url: "snapchat.com", updated: "2w ago" },
 ]
+
 
 const MOCK_PASSWORD = "p@ssw0rd!23"
 
@@ -37,6 +51,12 @@ export function OwnerVault() {
   const [copied, setCopied] = useState<number | null>(null)
   const [items, setItems] = useState(ITEMS)
   const [activeMenu, setActiveMenu] = useState<number | null>(null)
+  
+  // Add Item Logic
+  const [showAddItem, setShowAddItem] = useState(false)
+  const [newItemTitle, setNewItemTitle] = useState("")
+  const [newItemUsername, setNewItemUsername] = useState("")
+  const [newItemCategory, setNewItemCategory] = useState<Category>("credentials")
 
   const filtered = items.filter((item) => {
     const matchCat = activeCategory === "all" || item.cat === activeCategory
@@ -54,6 +74,27 @@ export function OwnerVault() {
     setCopied(id)
     setTimeout(() => setCopied(null), 1500)
   }
+
+  function handleAddItem(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newItemTitle || !newItemUsername) return
+
+    const newItem = {
+      id: Date.now(),
+      cat: newItemCategory,
+      icon: newItemCategory === "banking" ? "🏦" : newItemCategory === "documents" ? "📄" : newItemCategory === "bookings" ? "🏨" : "🔑",
+      title: newItemTitle,
+      username: newItemUsername,
+      url: newItemTitle.toLowerCase().replace(/\s+/g, "") + ".com",
+      updated: "Just now"
+    }
+
+    setItems(p => [newItem, ...p])
+    setShowAddItem(false)
+    setNewItemTitle("")
+    setNewItemUsername("")
+  }
+
 
   return (
     <div className="flex h-full gap-px bg-border overflow-hidden">
@@ -91,8 +132,11 @@ export function OwnerVault() {
         ))}
 
         {/* Add item */}
-        <button className="flex flex-1 items-end bg-background px-3 py-3">
-          <span className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+        <button 
+          onClick={() => setShowAddItem(true)}
+          className="group flex flex-1 items-end bg-background px-3 py-3"
+        >
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-primary group-hover:text-primary/80 transition-colors">
             <Plus className="h-3.5 w-3.5" /> Add Item
           </span>
         </button>
@@ -195,13 +239,84 @@ export function OwnerVault() {
         </div>
 
         {/* Footer status bar */}
-        <div className="flex items-center justify-between border-t border-border/40 bg-muted/10 px-4 py-2">
+        <div className="flex items-center justify-between border-t border-border/40 bg-muted/10 px-4 py-2 shrink-0">
           <p className="text-[10px] text-muted-foreground">{filtered.length} of {ITEMS.length} items</p>
-          <button className="flex items-center gap-1.5 text-[10px] text-primary hover:underline">
+          <button 
+            onClick={() => setShowAddItem(true)}
+            className="flex items-center gap-1.5 rounded bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20 transition-colors"
+          >
             <Plus className="h-3 w-3" /> Add new item
           </button>
         </div>
       </div>
+
+      {/* Add Item Modal */}
+      <AnimatePresence>
+        {showAddItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md rounded-2xl border border-border/60 bg-background shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
+                <h3 className="font-semibold text-foreground">Add to Vault</h3>
+                <button onClick={() => setShowAddItem(false)} className="rounded-lg p-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <form onSubmit={handleAddItem} className="p-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</label>
+                  <select 
+                    value={newItemCategory}
+                    onChange={(e) => setNewItemCategory(e.target.value as Category)}
+                    className="w-full rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                  >
+                    <option value="credentials">Credentials</option>
+                    <option value="banking">Banking</option>
+                    <option value="documents">Documents</option>
+                    <option value="bookings">Bookings</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Item Name</label>
+                  <input 
+                    type="text" 
+                    required
+                    autoFocus 
+                    value={newItemTitle}
+                    onChange={(e) => setNewItemTitle(e.target.value)}
+                    className="w-full rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none" 
+                    placeholder="e.g. Ledger Wallet Seed" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Username / Value</label>
+                  <input 
+                    type="text"
+                    required
+                    value={newItemUsername}
+                    onChange={(e) => setNewItemUsername(e.target.value)}
+                    className="w-full rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none" 
+                    placeholder="e.g. user@example.com" 
+                  />
+                </div>
+                <div className="pt-2 flex gap-2">
+                  <button 
+                    type="submit"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save & Encrypt
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

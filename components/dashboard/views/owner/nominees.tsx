@@ -4,16 +4,33 @@ import { useState } from "react"
 import { Plus, ShieldCheck, ShieldAlert, Mail, Phone, MoreHorizontal, Pencil, Trash2, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
+import data from "@/data.json"
+
 const ACCESS_LABELS: Record<string, string> = {
   vault: "Full Vault", banking: "Banking", documents: "Documents",
   credentials: "Credentials", bookings: "Bookings",
 }
 const ALL_ACCESS = Object.keys(ACCESS_LABELS)
 
-const INIT_NOMINEES = [
-  { id: 1, name: "Priya Sharma", initials: "PS", relation: "Spouse", email: "priya.sharma@gmail.com", phone: "+91 98765 43210", status: "verified", access: ["vault", "banking", "documents"], added: "14 Feb 2024", lastNotified: "2 days ago" },
-  { id: 2, name: "Rahul Mehta", initials: "RM", relation: "Son", email: "rahul.mehta@gmail.com", phone: "+91 98765 00011", status: "pending", access: ["documents"], added: "20 Mar 2024", lastNotified: "Never" },
-]
+// Derive demo nominees from data.json
+// We'll take the nominee information from the first two records as our demo nominees
+const INIT_NOMINEES = data.slice(0, 2).map((item, i) => {
+  const name = item.Nominee_Name || `Nominee ${i + 1}`
+  const email = item.Email ? item.Email.replace(/^[^@]*/, name.toLowerCase().replace(/\s+/g, '.')) : `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`
+  
+  return {
+    id: i + 1,
+    name: name,
+    initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    relation: item.Relation || (i === 0 ? "Spouse" : "Family"),
+    email: email,
+    phone: item.Nominee_Phone ? `+91 ${item.Nominee_Phone}` : "—",
+    status: i === 0 ? "verified" : "pending",
+    access: i === 0 ? ["vault", "banking", "documents"] : ["documents"],
+    added: "14 Feb 2024",
+    lastNotified: i === 0 ? "2 days ago" : "Never"
+  }
+}).filter(n => n.name) // Ensure we have a name
 
 export function OwnerNominees() {
   const [nominees, setNominees] = useState(INIT_NOMINEES)
@@ -23,9 +40,18 @@ export function OwnerNominees() {
   const [newEmail, setNewEmail] = useState("")
   const [newRelation, setNewRelation] = useState("")
 
+  const MAX_NOMINEES = 2
+  const limitReached = nominees.length >= MAX_NOMINEES
+
   function addNominee(e?: React.FormEvent) {
     if (e) e.preventDefault()
     
+    if (limitReached) {
+      alert("You can only add up to 2 nominees in the current plan.")
+      setShowAdd(false)
+      return
+    }
+
     // Strict email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!newName || !newEmail || !emailRegex.test(newEmail)) {
@@ -43,6 +69,7 @@ export function OwnerNominees() {
     setNewName(""); setNewEmail(""); setNewRelation(""); setShowAdd(false)
   }
 
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-border gap-px">
 
@@ -53,11 +80,23 @@ export function OwnerNominees() {
           <p className="text-[11px] text-muted-foreground">People who can access your vault after multi-factor verification</p>
         </div>
         <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          onClick={() => {
+            if (limitReached) {
+              alert("You have reached the maximum limit of 2 nominees.")
+            } else {
+              setShowAdd(!showAdd)
+            }
+          }}
+          disabled={limitReached}
+          className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+            limitReached 
+              ? "bg-muted text-muted-foreground cursor-not-allowed opacity-60" 
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
+          }`}
         >
-          <Plus className="h-3.5 w-3.5" /> Add Nominee
+          <Plus className="h-3.5 w-3.5" /> {limitReached ? "Limit Reached" : "Add Nominee"}
         </button>
+
       </div>
 
       {/* ── Add form ── */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { DashboardProvider, useDashboard } from "@/components/dashboard/dashboard-context"
+import { DashboardProvider, type DashboardUser, useDashboard } from "@/components/dashboard/dashboard-context"
 import { Sidebar } from "@/components/dashboard/layout/sidebar"
 import { Topbar } from "@/components/dashboard/layout/topbar"
 import { Chatbot } from "@/components/dashboard/chatbot"
@@ -35,7 +35,8 @@ function DashboardContent() {
                 { name: "Last Will & Testament.pdf", size: "2.4 MB", date: "Oct 12, 2024" },
                 { name: "Life Insurance Policy.pdf", size: "1.1 MB", date: "Sep 03, 2024" },
                 { name: "Property Deed - NY.docx", size: "542 KB", date: "Aug 15, 2023" },
-                { name: "Crypto Seed Backup.txt.enc", size: "4 KB", date: "Jan 10, 2024" },
+                { name: "Mutual Fund Statement.pdf", size: "1.8 MB", date: "Dec 05, 2024" },
+                { name: "Fixed Deposit Receipt.pdf", size: "850 KB", date: "Jan 10, 2024" },
               ].map((doc, i) => (
                 <div key={i} className="flex flex-col justify-between rounded-xl border border-border/60 bg-card p-4 transition-all hover:bg-muted/40 cursor-pointer">
                   <div className="flex items-start gap-3 mb-4">
@@ -93,9 +94,6 @@ function DashboardContent() {
       }
     }
   }
-
-  const isFullPage = true // all pages now use full-height attached-grid layout
-
   return (
     <div className="flex h-svh overflow-hidden bg-background">
       <Sidebar />
@@ -112,9 +110,9 @@ function DashboardContent() {
   )
 }
 
-export default function DashboardShell() {
+export default function DashboardShell({ initialUser }: { initialUser: DashboardUser }) {
   return (
-    <DashboardProvider>
+    <DashboardProvider initialUser={initialUser}>
       <DashboardContent />
     </DashboardProvider>
   )

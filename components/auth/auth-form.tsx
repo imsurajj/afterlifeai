@@ -1,22 +1,15 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 type Mode = "login" | "signup"
-
-const FEATURES = [
-  "AES-256 zero-knowledge encryption",
-  "Biometric face verification for nominees",
-  "Automated legacy triggers & access control",
-  "Full immutable audit log",
-]
 
 export function AuthForm() {
   const router = useRouter()
@@ -39,18 +32,6 @@ export function AuthForm() {
     password.length >= 6 &&
     (!isSignup || name.trim().length > 0)
 
-  const title = useMemo(() =>
-    isSignup ? "Create your vault" : "Open your vault",
-    [isSignup]
-  )
-
-  const subtitle = useMemo(() =>
-    isSignup
-      ? "Start securing your digital legacy today."
-      : "Enter your credentials to access your Afterlife Vault.",
-    [isSignup]
-  )
-
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!canSubmit) return
@@ -62,7 +43,7 @@ export function AuthForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: isSignup ? name : undefined,
+          name,
           email,
           password,
         }),

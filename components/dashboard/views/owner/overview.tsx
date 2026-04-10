@@ -5,19 +5,27 @@ import { useDashboard } from "@/components/dashboard/dashboard-context"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
-const NOMINEES = [
-  { name: "Priya Sharma", initials: "PS", relation: "Spouse", status: "verified" },
-  { name: "Rahul Mehta", initials: "RM", relation: "Son", status: "pending" },
-]
+import data from "@/data.json"
+
+const NOMINEES = data.slice(0, 2).map((item, i) => {
+  const name = item.Nominee_Name || `Nominee ${i + 1}`
+  return {
+    name,
+    initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    relation: item.Relation || (i === 0 ? "Spouse" : "Family"),
+    status: i === 0 ? "verified" : "pending"
+  }
+})
 
 const ACTIVITY = [
-  { dot: true, text: "Nominee added — Priya Sharma (Spouse)", time: "2d ago", type: "success" },
-  { dot: false, text: "Gmail credential updated", time: "5d ago", type: "info" },
+  { dot: true, text: `Nominee added — ${NOMINEES[0]?.name}`, time: "2d ago", type: "success" },
+  { dot: false, text: "Aadhar card stored in vault", time: "5d ago", type: "info" },
   { dot: false, text: "Inactivity trigger set — 90 days", time: "1w ago", type: "info" },
-  { dot: true, text: "HDFC bank account stored", time: "1w ago", type: "success" },
-  { dot: false, text: "LIC policy details added", time: "2w ago", type: "info" },
-  { dot: true, text: "Vault created and encrypted", time: "2w ago", type: "success" },
+  { dot: true, text: "Bank account encrypted", time: "1w ago", type: "success" },
+  { dot: false, text: "LIC policy details synchronized", time: "2w ago", type: "info" },
+  { dot: true, text: "Vault created for " + data[0].Name, time: "2w ago", type: "success" },
 ]
+
 
 const ASSETS = [
   { cat: "Credentials", count: 6, icon: "🔑", color: "bg-primary/10 text-primary" },
