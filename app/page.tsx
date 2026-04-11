@@ -6,7 +6,7 @@ import { GridLayout, SectionDivider } from "@/components/landing/grid-layout"
 import Hero from "@/components/landing/hero"
 import Navbar from "@/components/landing/navbar"
 // import Pricing from "@/components/landing/pricing"
-import Testimonials from "@/components/landing/testimonials"
+// import Testimonials from "@/components/landing/testimonials"
 
 export default function Page() {
   return (
@@ -18,7 +18,7 @@ export default function Page() {
       <SectionDivider />
       {/* <Pricing /> */}
       <SectionDivider />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <FAQ />
       <CTA />
       <Footer />
