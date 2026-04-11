@@ -4,6 +4,8 @@ import { DashboardProvider, type DashboardUser, useDashboard } from "@/component
 import { Sidebar } from "@/components/dashboard/layout/sidebar"
 import { Topbar } from "@/components/dashboard/layout/topbar"
 import { Chatbot } from "@/components/dashboard/chatbot"
+import { ShieldCheck } from "lucide-react"
+import { AadhaarKYC } from "@/components/dashboard/aadhaar-kyc"
 
 // Owner views
 import { OwnerOverview } from "@/components/dashboard/views/owner/overview"
@@ -11,13 +13,14 @@ import { OwnerVault } from "@/components/dashboard/views/owner/my-vault"
 import { OwnerNominees } from "@/components/dashboard/views/owner/nominees"
 import { OwnerTriggers } from "@/components/dashboard/views/owner/triggers"
 import { OwnerAuditLog } from "@/components/dashboard/views/owner/audit-log"
+import { OwnerDocuments } from "@/components/dashboard/views/owner/documents"
 
 // Nominee views
 import { NomineeAccessFlow } from "@/components/dashboard/nominee-access-flow"
 import { NomineeHistory } from "@/components/dashboard/views/nominee/history"
 
 function DashboardContent() {
-  const { role, activeView } = useDashboard()
+  const { role, activeView, user } = useDashboard()
 
   const view = () => {
     if (role === "owner") {
@@ -26,35 +29,7 @@ function DashboardContent() {
         case "vault": return <OwnerVault />
         case "nominees": return <OwnerNominees />
         case "triggers": return <OwnerTriggers />
-        case "documents": return (
-          <div className="flex h-full flex-col p-6 overflow-y-auto">
-            <h2 className="text-xl font-bold text-foreground">Encrypted Documents</h2>
-            <p className="mb-6 text-sm text-muted-foreground">Store high-priority files, wills, and identification.</p>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                { name: "Last Will & Testament.pdf", size: "2.4 MB", date: "Oct 12, 2024" },
-                { name: "Life Insurance Policy.pdf", size: "1.1 MB", date: "Sep 03, 2024" },
-                { name: "Property Deed - NY.docx", size: "542 KB", date: "Aug 15, 2023" },
-                { name: "Mutual Fund Statement.pdf", size: "1.8 MB", date: "Dec 05, 2024" },
-                { name: "Fixed Deposit Receipt.pdf", size: "850 KB", date: "Jan 10, 2024" },
-              ].map((doc, i) => (
-                <div key={i} className="flex flex-col justify-between rounded-xl border border-border/60 bg-card p-4 transition-all hover:bg-muted/40 cursor-pointer">
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">📄</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">{doc.size}</p>
-                    </div>
-                  </div>
-                  <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] uppercase text-muted-foreground">
-                    <span>Uploaded {doc.date}</span>
-                    <span className="font-bold text-primary">AES-256</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
+        case "documents": return <OwnerDocuments />
         case "audit": return <OwnerAuditLog />
         default: return <OwnerOverview />
       }
@@ -99,6 +74,28 @@ function DashboardContent() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
+        
+        {/* Verification Banner */}
+        {!user.kycVerified && (
+          <div className="bg-destructive/10 border-b border-destructive/20 px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-destructive/20 p-1.5 rounded-lg">
+                <ShieldCheck className="h-4 w-4 text-destructive" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-destructive">Identity Verification Required</p>
+                <p className="text-[10px] text-muted-foreground">Complete your e-KYC to fully secure your assets and enable nominee access.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.open("/dashboard/verify", "_blank")}
+              className="px-4 py-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-lg hover:bg-destructive/90 transition-all shadow-sm shadow-destructive/10"
+            >
+              Verify Now
+            </button>
+          </div>
+        )}
+
         <main className="flex-1 overflow-hidden">
           <div className="h-full p-4 sm:p-5">
             {view()}
@@ -110,10 +107,6 @@ function DashboardContent() {
   )
 }
 
-export default function DashboardShell({ initialUser }: { initialUser: DashboardUser }) {
-  return (
-    <DashboardProvider initialUser={initialUser}>
-      <DashboardContent />
-    </DashboardProvider>
-  )
+export default function DashboardShell() {
+  return <DashboardContent />
 }

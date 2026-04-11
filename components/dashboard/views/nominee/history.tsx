@@ -6,65 +6,56 @@ import { Badge } from "@/components/ui/badge"
 const ACCESSES = [
   {
     id: 1,
-    deceased: "Ramesh Kumar Sharma",
-    certNo: "DC/2024/DL/00471",
-    accessed: "4 days ago",
-    depts: ["Bank & EPFO", "Insurance", "Pension"],
+    deceased: "Rahul Yadav",
+    certNo: "DC-2077-BGLR-001",
+    accessed: "2 hours ago",
+    depts: ["Bank & EPFO", "Stocks & Equity", "Social & Personal"],
     status: "completed",
-    window: "87 days remaining",
+    window: "89 days remaining",
+    logs: [
+      { time: "11:15 AM", action: "Aadhaar e-KYC Verification", status: "success" },
+      { time: "11:17 AM", action: "Death Certificate Validation", status: "success" },
+      { time: "11:18 AM", action: "Biometric Face Match", status: "success" },
+      { time: "11:20 AM", action: "Unlocked 'Bank & EPFO' cluster", status: "unlocked" },
+      { time: "11:22 AM", action: "Retrieved ICICI Savings details", status: "retrieved" },
+      { time: "11:25 AM", action: "Unlocked 'Social & Personal' cluster", status: "unlocked" },
+      { time: "11:26 AM", action: "Retrieved Primary Gmail password", status: "retrieved" },
+    ]
   },
 ]
 
 export function NomineeHistory() {
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">My Accesses</h2>
-        <p className="text-xs text-muted-foreground">History of all deceased persons whose vaults you have accessed.</p>
+    <div className="space-y-8 max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
+      <div className="flex items-center justify-between border-b border-border/40 pb-6">
+        <div>
+          <h2 className="text-xs font-black uppercase tracking-[0.4em] text-foreground">Access Ledger</h2>
+          <p className="text-[9px] text-muted-foreground uppercase mt-1 tracking-widest font-bold opacity-40">Cryptographic audit trail • Session RY-2077</p>
+        </div>
+        <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 text-[8px] font-black py-0.5 px-3 tracking-[0.2em]">LIVE</Badge>
       </div>
 
-      {ACCESSES.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/10 py-16 text-center">
-          <Clock className="mb-3 h-8 w-8 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">No access records yet</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Your verified accesses will appear here</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {ACCESSES.map((a) => (
-            <div key={a.id} className="rounded-2xl border border-border/60 bg-card p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-foreground">{a.deceased}</p>
-                    <Badge variant={a.status === "completed" ? "default" : "secondary"} className="text-[10px]">
-                      {a.status === "completed"
-                        ? <><CheckCircle2 className="h-2.5 w-2.5 mr-1" />Completed</>
-                        : a.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">Death Cert: {a.certNo}</p>
-                  <p className="text-xs text-muted-foreground">Accessed: {a.accessed} · {a.window}</p>
-                </div>
-                <button className="flex items-center gap-1.5 rounded-xl border border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <ExternalLink className="h-3.5 w-3.5" /> View Records
-                </button>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {a.depts.map((d) => (
-                  <span key={d} className="rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">{d}</span>
-                ))}
-              </div>
+      <div className="space-y-1">
+        {ACCESSES[0].logs.map((L, i) => (
+          <div key={i} className="flex items-center gap-6 py-3 px-4 rounded-lg hover:bg-muted/10 transition-colors group relative overflow-hidden">
+            <div className="font-mono text-[9px] text-muted-foreground w-14 opacity-30 group-hover:opacity-100 transition-opacity tabular-nums">{L.time}</div>
+            <div className="h-1 w-1 rounded-full bg-border group-hover:bg-primary transition-colors flex-shrink-0" />
+            <div className="flex-1 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground group-hover:text-foreground transition-all">
+              {L.action}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-green-500/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              {L.status}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <div className="rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
-        <p className="text-xs text-muted-foreground">
-          All access attempts are permanently logged and cannot be modified. Dispute any unauthorized access by contacting support.
-        </p>
+      <div className="pt-8 mt-8 border-t border-border/40 flex items-center justify-between opacity-30">
+        <div className="flex items-center gap-3">
+          <Clock className="h-3 w-3" />
+          <p className="text-[8px] font-black uppercase tracking-[0.2em]">Purge local cache on disconnect</p>
+        </div>
+        <p className="text-[8px] font-black uppercase tracking-[0.2em]">0 errors • 7 verified nodes</p>
       </div>
     </div>
   )

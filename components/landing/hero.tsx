@@ -48,18 +48,27 @@ export default function Hero() {
             animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
           >
-            <PrimaryCtaButton className="text-primary-foreground w-full max-w-sm sm:w-auto" />
-            <Button
-              variant="outline"
-              className="h-12 w-full max-w-sm px-8 text-base font-semibold has-[>svg]:px-8 sm:w-auto"
-              size="lg"
-              asChild
-            >
-              <Link href="#features">
-                Try demo
-                <ArrowUpRight className="h-8 w-8" />
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+              <Button
+                asChild
+                className="h-12 w-full sm:w-auto px-8 text-base font-bold bg-white text-black hover:bg-slate-200 rounded-xl shadow-lg shadow-white/5 order-2 sm:order-1"
+                size="lg"
+              >
+                <Link href="/api/auth/demo">
+                  Get Started
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="h-12 w-full sm:w-auto px-8 text-base font-bold border-white/20 hover:bg-white/10 rounded-xl order-1 sm:order-2"
+                size="lg"
+              >
+                <Link href="/auth">
+                  Try Now
+                </Link>
+              </Button>
+            </div>
           </motion.div>
         </motion.div>
 

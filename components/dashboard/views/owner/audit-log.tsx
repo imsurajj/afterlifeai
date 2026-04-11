@@ -4,177 +4,136 @@ import { useState } from "react"
 import { ShieldCheck, KeyRound, User, Activity, AlertTriangle, Clock, Download, Filter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useDashboard } from "@/components/dashboard/dashboard-context"
+import { formatDistanceToNow } from "date-fns"
 
-type LogType = "access" | "auth" | "change" | "system"
+type LogType = "access" | "auth" | "change" | "system" | "signup" | "kyc_success" | "nominee_add" | "vault_add" | "login"
 
-const ALL_LOGS = [
-  { id: 1, type: "auth" as LogType, action: "Vault unlocked — successful login", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "Today, 9:14 AM", flag: null },
-  { id: 2, type: "change" as LogType, action: "Password credential added — Gmail (google.com)", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "2 days ago, 4:22 PM", flag: null },
-  { id: 3, type: "change" as LogType, action: "Nominee added — Priya Sharma (Spouse)", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "3 days ago, 11:08 AM", flag: null },
-  { id: 4, type: "access" as LogType, action: "Nominee access attempt — Priya Sharma requested access", by: "Priya Sharma", role: "Nominee", ip: "49.34.12.8", time: "4 days ago, 2:30 PM", flag: null },
-  { id: 5, type: "auth" as LogType, action: "OTP sent to registered mobile ••••72", by: "System", role: "System", ip: "—", time: "4 days ago, 2:29 PM", flag: null },
-  { id: 6, type: "change" as LogType, action: "HDFC bank account details stored", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "5 days ago, 6:00 PM", flag: null },
-  { id: 7, type: "change" as LogType, action: "LIC insurance policy details added", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "5 days ago, 5:30 PM", flag: null },
-  { id: 8, type: "system" as LogType, action: "Inactivity trigger configured — 90 day window", by: "Arjun Mehta", role: "Owner", ip: "182.65.4.22", time: "1 week ago, 6:00 PM", flag: null },
-  { id: 9, type: "auth" as LogType, action: "Failed login attempt — unrecognized device", by: "Unknown", role: "—", ip: "141.92.4.11", time: "1 week ago, 3:47 AM", flag: "suspicious" },
-  { id: 10, type: "auth" as LogType, action: "Failed login — wrong password (2/3 attempts)", by: "Unknown", role: "—", ip: "141.92.4.11", time: "1 week ago, 3:44 AM", flag: "suspicious" },
-  { id: 11, type: "access" as LogType, action: "Face verification completed — liveness confirmed", by: "Priya Sharma", role: "Nominee", ip: "49.34.12.8", time: "10 days ago, 4:00 PM", flag: null },
-  { id: 12, type: "system" as LogType, action: "Vault created and AES-256 encryption applied", by: "System", role: "System", ip: "—", time: "2 weeks ago, 10:00 AM", flag: null },
-]
-
-const TYPE_CONFIG: Record<LogType, { label: string; icon: React.ElementType; bg: string; text: string }> = {
-  access: { label: "Access", icon: KeyRound, bg: "bg-blue-500/10", text: "text-blue-500" },
+const TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; bg: string; text: string }> = {
+  login: { label: "Security", icon: ShieldCheck, bg: "bg-primary/10", text: "text-primary" },
   auth: { label: "Auth", icon: ShieldCheck, bg: "bg-primary/10", text: "text-primary" },
-  change: { label: "Change", icon: User, bg: "bg-amber-500/10", text: "text-amber-500" },
+  signup: { label: "System", icon: Activity, bg: "bg-muted", text: "text-muted-foreground" },
+  kyc_success: { label: "Identity", icon: User, bg: "bg-blue-500/10", text: "text-blue-500" },
+  nominee_add: { label: "Trust", icon: User, bg: "bg-amber-500/10", text: "text-amber-500" },
+  vault_add: { label: "Assets", icon: KeyRound, bg: "bg-emerald-500/10", text: "text-emerald-500" },
   system: { label: "System", icon: Activity, bg: "bg-muted", text: "text-muted-foreground" },
 }
 
-const FILTERS = ["All", "Access", "Auth", "Change", "System", "Suspicious"] as const
+const FILTERS = ["All", "Privacy", "Assets", "Access", "System"] as const
 type Filter = typeof FILTERS[number]
 
 export function OwnerAuditLog() {
+  const { activities, user } = useDashboard()
   const [filter, setFilter] = useState<Filter>("All")
-  const [sortAsc, setSortAsc] = useState(false)
 
-  const filtered = ALL_LOGS.filter((e) => {
+  const filtered = activities.filter((a) => {
     if (filter === "All") return true
-    if (filter === "Suspicious") return e.flag === "suspicious"
-    return e.type === filter.toLowerCase()
+    if (filter === "Assets") return a.type === "vault_add"
+    if (filter === "Access") return a.type === "nominee_add"
+    if (filter === "Privacy") return a.type === "kyc_success" || a.type === "login"
+    return true
   })
 
-  const counts = {
-    All: ALL_LOGS.length,
-    Access: ALL_LOGS.filter(e => e.type === "access").length,
-    Auth: ALL_LOGS.filter(e => e.type === "auth").length,
-    Change: ALL_LOGS.filter(e => e.type === "change").length,
-    System: ALL_LOGS.filter(e => e.type === "system").length,
-    Suspicious: ALL_LOGS.filter(e => e.flag === "suspicious").length,
-  }
-
   return (
-    <div className="flex h-full flex-col space-y-4">
+    <div className="flex h-full flex-col space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Audit Log</h2>
-          <p className="text-xs text-muted-foreground">Immutable record of all vault activity — cannot be modified or deleted.</p>
+          <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground">Immutable Ledger</h2>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 mt-1">
+            Cryptographic record of all vault transactions for {user.name}
+          </p>
         </div>
-        <button className="flex items-center gap-1.5 self-start rounded-xl border border-border/60 px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <Download className="h-3.5 w-3.5" /> Export CSV
+        <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all shadow-xl active:scale-[0.98]">
+          <Download className="h-3.5 w-3.5" /> Export SHA-256
         </button>
       </div>
 
       {/* Filter pills */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors",
+              "flex items-center gap-1.5 rounded-lg border px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
               filter === f
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-              f === "Suspicious" && filter !== f && "border-destructive/30 text-destructive/70 hover:text-destructive"
+                ? "border-primary bg-primary/10 text-primary shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                : "border-white/5 bg-white/[0.02] text-slate-500 hover:text-slate-300"
             )}
           >
-            {f === "Suspicious" && <AlertTriangle className="h-3 w-3" />}
             {f}
-            <span className="ml-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{counts[f]}</span>
           </button>
         ))}
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto rounded-2xl border border-border/60">
-        <table className="w-full min-w-[700px] border-collapse text-sm">
+      <div className="flex-1 overflow-auto rounded-2xl border border-white/5 bg-black/50 backdrop-blur-sm">
+        <table className="w-full min-w-[700px] border-collapse text-left">
           <thead>
-            <tr className="border-b border-border/60 bg-muted/30">
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Type</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Action</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-32">By</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Role</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-28">IP Address</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-36 cursor-pointer hover:text-foreground" onClick={() => setSortAsc(!sortAsc)}>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Timestamp
-                </div>
-              </th>
-              <th className="px-4 py-3 w-24"></th>
+            <tr className="border-b border-white/5 bg-white/[0.01]">
+              <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-32">Classification</th>
+              <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Security Transaction Event</th>
+              <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-36">Timestamp (Relative)</th>
+              <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-24">Nodes</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/40">
-            {filtered.map((entry, i) => {
-              const cfg = TYPE_CONFIG[entry.type]
-              return (
-                <tr
-                  key={entry.id}
-                  className={cn(
-                    "group transition-colors hover:bg-muted/20",
-                    entry.flag === "suspicious" && "bg-destructive/3 hover:bg-destructive/5"
-                  )}
-                >
-                  {/* Type badge */}
-                  <td className="px-4 py-3">
-                    <div className={cn("flex w-fit items-center gap-1.5 rounded-lg px-2 py-1", cfg.bg)}>
-                      <cfg.icon className={cn("h-3 w-3", cfg.text)} />
-                      <span className={cn("text-[10px] font-semibold", cfg.text)}>{cfg.label}</span>
-                    </div>
+          <tbody className="divide-y divide-white/[0.03]">
+            {filtered.length === 0 ? (
+               <tr>
+                  <td colSpan={4} className="py-24 text-center">
+                     <Activity className="h-8 w-8 text-white/5 mx-auto mb-3" />
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">No ledger entries found</p>
                   </td>
-
-                  {/* Action */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-start gap-2">
-                      {entry.flag === "suspicious" && <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />}
-                      <span className={cn("text-xs leading-relaxed", entry.flag === "suspicious" ? "text-destructive" : "text-foreground/80")}>
-                        {entry.action}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* By */}
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-medium text-foreground">{entry.by}</span>
-                  </td>
-
-                  {/* Role */}
-                  <td className="px-4 py-3">
-                    <Badge
-                      variant={entry.role === "Owner" ? "default" : entry.role === "Nominee" ? "secondary" : "outline"}
-                      className="text-[10px]"
-                    >
-                      {entry.role}
-                    </Badge>
-                  </td>
-
-                  {/* IP */}
-                  <td className="px-4 py-3">
-                    <span className={cn("font-mono text-[11px]", entry.flag === "suspicious" ? "text-destructive" : "text-muted-foreground")}>
-                      {entry.ip}
-                    </span>
-                  </td>
-
-                  {/* Time */}
-                  <td className="px-4 py-3">
-                    <span className="text-[11px] text-muted-foreground">{entry.time}</span>
-                  </td>
-
-                  {/* Flag */}
-                  <td className="px-4 py-3 text-right">
-                    {entry.flag === "suspicious" && (
-                      <Badge variant="destructive" className="text-[10px]">⚠ Flagged</Badge>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
+               </tr>
+            ) : (
+                filtered.map((a) => {
+                  const cfg = TYPE_CONFIG[a.type] || TYPE_CONFIG.system
+                  return (
+                    <tr key={a.id} className="group transition-all hover:bg-white/[0.02]">
+                      <td className="px-6 py-4">
+                        <div className={cn("flex w-fit items-center gap-1.5 rounded-lg px-2.5 py-1", cfg.bg)}>
+                          <cfg.icon className={cn("h-3 w-3", cfg.text)} />
+                          <span className={cn("text-[9px] font-black uppercase tracking-widest", cfg.text)}>{cfg.label}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-[11px] font-bold text-foreground italic group-hover:text-primary transition-colors">{a.description}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 mt-1">Transaction ID: {a.id.slice(0,8)}...{a.id.slice(-4)}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            {formatDistanceToNow(new Date(a.createdAt))} ago
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                         <div className="flex items-center gap-1.5 justify-end">
+                            <div className="h-1 w-1 rounded-full bg-primary" />
+                            <div className="h-1 w-1 rounded-full bg-primary opacity-40" />
+                            <div className="h-1 w-1 rounded-full bg-primary opacity-10" />
+                         </div>
+                      </td>
+                    </tr>
+                  )
+                })
+            )}
           </tbody>
         </table>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
-        Showing {filtered.length} of {ALL_LOGS.length} events · Read-only · Logs cannot be modified
-      </p>
+      <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5">
+         <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+               <ShieldCheck className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+               <p className="text-[11px] font-black uppercase tracking-widest text-white italic">Continuous Auditing Protocol Active</p>
+               <p className="text-[10px] font-medium text-slate-500 mt-0.5 leading-relaxed">
+                  Every interaction within the Afterlife AI ecosystem is serialized and added to our immutable ledger. To maintain zero-knowledge integrity, these records cannot be purged except through total account termination.
+               </p>
+            </div>
+         </div>
+      </div>
     </div>
   )
 }

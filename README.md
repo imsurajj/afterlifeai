@@ -2,6 +2,10 @@
 
 This is a Next.js template with shadcn/ui.
 
+- L7R-zf*qcbauFiMsupabase login
+supabase init
+supabase link --project-ref foobblpaiuwthyzqohyz
+
 ## Adding components
 
 To add components to your app, run the following command:

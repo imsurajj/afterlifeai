@@ -27,17 +27,24 @@ export default function CTA() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 flex flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center">
-          <PrimaryCtaButton className="text-primary-foreground" />
+        <div className="mx-auto mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-center">
           <Button
-            variant="outline"
-            className="h-12 px-8 text-base font-semibold has-[>svg]:px-8"
-            size="lg"
             asChild
+            className="h-12 w-full sm:w-auto px-8 text-base font-bold bg-white text-black hover:bg-slate-200 rounded-xl shadow-lg shadow-white/5 order-2 sm:order-1"
+            size="lg"
           >
-            <Link href="#features">
-              Try demo
-              <ArrowUpRight className="h-8 w-8" />
+            <Link href="/api/auth/demo">
+              Get Started
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 w-full sm:w-auto px-8 text-base font-bold border-white/20 hover:bg-white/10 rounded-xl order-1 sm:order-2"
+            size="lg"
+          >
+            <Link href="/auth">
+              My Vault
             </Link>
           </Button>
         </div>

@@ -1,130 +1,145 @@
 "use client"
 
 import { useState } from "react"
-import { Clock, Bell, Activity, CheckCircle2, AlertTriangle, ChevronRight } from "lucide-react"
+import { Clock, Bell, Activity, CheckCircle2, AlertTriangle, ChevronRight, Save } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useDashboard } from "@/components/dashboard/dashboard-context"
 
 const WINDOW_OPTIONS = [
-  { label: "30 days", val: 30 },
-  { label: "60 days", val: 60 },
-  { label: "90 days", val: 90 },
-  { label: "180 days", val: 180 },
-  { label: "1 year", val: 365 },
+  { label: "30 Days", val: 30 },
+  { label: "60 Days", val: 60 },
+  { label: "90 Days", val: 90 },
+  { label: "180 Days", val: 180 },
+  { label: "1 Year", val: 365 },
 ]
 
 type TriggerStatus = "active" | "inactive"
 
-const INIT_TRIGGERS = [
-  { id: 1, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10", label: "Inactivity Trigger", desc: "Notify nominees if I don't log in within the configured window.", config: "90 days", status: "active" as TriggerStatus, lastCheck: "Checked 2 days ago" },
-  { id: 2, icon: Bell, color: "text-blue-500", bg: "bg-blue-500/10", label: "Death Certificate Upload", desc: "Allow a nominee to upload a death registration document to initiate access.", config: "Enabled", status: "active" as TriggerStatus, lastCheck: "Never triggered" },
-  { id: 3, icon: Activity, color: "text-muted-foreground", bg: "bg-muted/40", label: "Lawyer Authorization", desc: "A trusted lawyer can authorize access using a signed one-time code.", config: "Not configured", status: "inactive" as TriggerStatus, lastCheck: "Not set up" },
-]
-
 export function OwnerTriggers() {
+  const { user } = useDashboard()
   const [window_, setWindow_] = useState(90)
-  const [triggers, setTriggers] = useState(INIT_TRIGGERS)
+  
+  const [triggers, setTriggers] = useState([
+    { id: 1, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10", label: "Inactivity Monitor", desc: "Initiate transfer if account access is not detected within the window.", config: "90 Days", status: "active" as TriggerStatus, lastCheck: "2d ago" },
+    { id: 2, icon: Bell, color: "text-blue-500", bg: "bg-blue-500/10", label: "Legal Document Trigger", desc: "Direct upload of verified death registration by primary nominee.", config: "Enabled", status: "active" as TriggerStatus, lastCheck: "Idle" },
+    { id: 3, icon: Activity, color: "text-slate-500", bg: "bg-slate-500/10", label: "Lawyer Consensus", desc: "Authorization through signed cryptographic lawyer bypass.", config: "Not Set", status: "inactive" as TriggerStatus, lastCheck: "Disabled" },
+  ])
 
   function toggleTrigger(id: number) {
     setTriggers(p => p.map(t => t.id === id ? { ...t, status: t.status === "active" ? "inactive" : "active" } : t))
   }
 
   return (
-    <div className="flex h-full flex-col gap-px bg-border overflow-hidden">
-
-      {/* ── Inactivity window header ── */}
-      <div className="flex flex-col gap-4 bg-background px-5 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Access Triggers</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Configure when and how nominees can access your vault after your passing</p>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1">
-            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-            <span className="text-xs font-medium text-primary">2 Active</span>
-          </div>
-        </div>
-
-        {/* Inactivity window picker — horizontal strip */}
+    <div className="flex h-full flex-col space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Inactivity Window</p>
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground">Relinquishment Protocols</h2>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 mt-1">
+            Deterministic triggers for autonomous vault transfer
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+           <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.2)]" />
+           <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">Node Monitoring: Enabled</span>
+        </div>
+      </div>
+
+      {/* Main Window Config */}
+      <div className="rounded-2xl border border-white/10 bg-[#0b0b0b] p-6 shadow-xl">
+         <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-6">Primary Liveness Window</p>
+         
+         <div className="flex flex-wrap gap-2 mb-8">
             {WINDOW_OPTIONS.map((opt) => (
-              <button
-                key={opt.val}
-                onClick={() => setWindow_(opt.val)}
-                className={cn(
-                  "shrink-0 rounded-xl border px-4 py-2 text-xs font-medium transition-colors",
-                  window_ === opt.val
-                    ? "border-primary/40 bg-primary text-primary-foreground shadow-sm"
-                    : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
+               <button
+                  key={opt.val}
+                  onClick={() => setWindow_(opt.val)}
+                  className={cn(
+                    "px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    window_ === opt.val 
+                      ? "bg-white text-black shadow-lg shadow-white/5" 
+                      : "bg-white/[0.02] border border-white/5 text-slate-500 hover:text-slate-300"
+                  )}
+               >
+                  {opt.label}
+               </button>
             ))}
-          </div>
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-            <p className="text-[11px] text-amber-600 dark:text-amber-400">
-              If you don't log in for <strong>{WINDOW_OPTIONS.find(o => o.val === window_)?.label}</strong>, nominees will be notified and a 72-hour hold will activate before access is granted.
-            </p>
-          </div>
-        </div>
-      </div>
+         </div>
 
-      {/* ── Trigger rows table header ── */}
-      <div className="grid grid-cols-[auto_2fr_1fr_1fr_auto] items-center gap-4 bg-muted/20 px-5 py-2.5">
-        {["", "Trigger", "Config", "Last Event", "Status"].map((h) => (
-          <p key={h} className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{h}</p>
-        ))}
-      </div>
-
-      {/* ── Trigger rows ── */}
-      <div className="flex-1 divide-y divide-border/40 overflow-y-auto bg-background">
-        {triggers.map((t) => (
-          <div key={t.id} className="grid grid-cols-[auto_2fr_1fr_1fr_auto] items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors">
-            {/* Icon */}
-            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", t.bg)}>
-              <t.icon className={cn("h-4 w-4", t.color)} />
+         <div className="flex items-start gap-4 rounded-xl bg-amber-500/5 border border-amber-500/10 p-5">
+            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+               <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Protocol Warning</p>
+               <p className="text-[11px] font-medium text-amber-500/70 leading-relaxed italic">
+                 Failure to authenticate for {WINDOW_OPTIONS.find(o => o.val === window_)?.label} will initiate an SMS/Email alert to all nominees. A 72-hour override window will be provided before final decryption is unlocked.
+               </p>
             </div>
-
-            {/* Label + desc */}
-            <div>
-              <p className="text-sm font-medium text-foreground">{t.label}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 max-w-sm">{t.desc}</p>
-            </div>
-
-            {/* Config */}
-            <p className="text-xs text-foreground/70">{t.config}</p>
-
-            {/* Last event */}
-            <p className="text-xs text-muted-foreground">{t.lastCheck}</p>
-
-            {/* Toggle */}
-            <button
-              onClick={() => toggleTrigger(t.id)}
-              className={cn(
-                "rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors",
-                t.status === "active"
-                  ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
-                  : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
-              )}
-            >
-              {t.status === "active" ? "Active" : "Disabled"}
-            </button>
-          </div>
-        ))}
+         </div>
       </div>
 
-      {/* ── Coming soon row ── */}
-      <div className="flex items-center gap-4 bg-background px-5 py-4 border-t border-border/40">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/40">
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">More coming soon</p>
-          <p className="text-[10px] text-muted-foreground/70">Hospital admission · Family consensus vote · Court order upload</p>
-        </div>
+      {/* Trigger Ledger */}
+      <div className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-black/50 backdrop-blur-sm">
+         <table className="w-full min-w-[700px] border-collapse text-left">
+            <thead>
+               <tr className="border-b border-white/5 bg-white/[0.01]">
+                  <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-16"></th>
+                  <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Transfer Trigger Condition</th>
+                  <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-32">Configuration</th>
+                  <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-32">Status</th>
+                  <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 w-32 text-right text-right">Action</th>
+               </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.03]">
+               {triggers.map((t) => (
+                  <tr key={t.id} className="group transition-all hover:bg-white/[0.02]">
+                     <td className="px-6 py-5">
+                        <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg border", t.status === "active" ? "bg-white/5 border-white/10" : "bg-black opacity-20")}>
+                           <t.icon className={cn("h-4 w-4", t.status === "active" ? t.color : "text-slate-700")} />
+                        </div>
+                     </td>
+                     <td className="px-6 py-5">
+                        <p className={cn("text-[12px] font-bold italic", t.status === "active" ? "text-white" : "text-slate-600")}>{t.label}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 mt-1 max-w-sm">{t.desc}</p>
+                     </td>
+                     <td className="px-6 py-5">
+                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{t.id === 1 ? WINDOW_OPTIONS.find(o => o.val === window_)?.label : t.config}</span>
+                     </td>
+                     <td className="px-6 py-5">
+                        <div className="flex items-center gap-1.5">
+                           <div className={cn("h-1 w-1 rounded-full", t.status === "active" ? "bg-primary shadow-[0_0_6px_rgba(255,255,255,0.4)]" : "bg-slate-700")} />
+                           <span className={cn("text-[9px] font-black uppercase tracking-widest", t.status === "active" ? "text-primary italic" : "text-slate-700")}>
+                              {t.status === "active" ? "Enabled" : "Disabled"}
+                           </span>
+                        </div>
+                     </td>
+                     <td className="px-6 py-5 text-right">
+                        <button 
+                           onClick={() => toggleTrigger(t.id)}
+                           className={cn(
+                             "text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all active:scale-95",
+                             t.status === "active" 
+                               ? "border-red-500/20 text-red-500 hover:bg-red-500/10" 
+                               : "border-white/10 text-slate-500 hover:text-white hover:bg-white/5"
+                           )}
+                        >
+                           {t.status === "active" ? "Disable" : "Enable"}
+                        </button>
+                     </td>
+                  </tr>
+               ))}
+            </tbody>
+         </table>
+      </div>
+
+      {/* Footer Support */}
+      <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 flex items-center justify-between">
+         <div className="flex items-center gap-3">
+            <Activity className="h-4 w-4 text-slate-700" />
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Global Watchdog Latency: 42ms</p>
+         </div>
+         <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
+            Request Manual Review Bypass
+         </button>
       </div>
     </div>
   )

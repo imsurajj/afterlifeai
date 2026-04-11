@@ -4,6 +4,15 @@ export const PROFILE_COOKIE_NAME = "afterlife_profile"
 export interface SessionProfile {
   name: string
   email: string
+  role?: string
+  kycVerified?: boolean
+  kycData?: {
+    aadhaarName: string
+    maskedAadhaar: string
+    dob: string
+    address: string
+    photo?: string
+  }
 }
 
 export function isValidEmail(value: string) {
@@ -43,6 +52,9 @@ export function parseProfileCookie(value: string | undefined): SessionProfile | 
     return {
       name: parsed.name,
       email: parsed.email,
+      role: parsed.role,
+      kycVerified: parsed.kycVerified,
+      kycData: parsed.kycData,
     }
   } catch {
     return null

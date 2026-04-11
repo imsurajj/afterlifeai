@@ -25,7 +25,7 @@ export function PrimaryCtaButton({ className }: { className?: string }) {
       size="lg"
       asChild
     >
-      <Link href="/dashboard">
+      <Link href={isLogged ? "/dashboard" : "/api/auth/demo"}>
         <BiSolidZap className="mr-2 h-5 w-5 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
         <span>{isLogged ? "Go to Vault" : "Get Started"}</span>
       </Link>

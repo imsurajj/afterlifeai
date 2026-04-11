@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, ShieldCheck, ShieldAlert, Mail, Phone, MoreHorizontal, Pencil, Trash2, ChevronDown } from "lucide-react"
+import { Plus, ShieldCheck, ShieldAlert, Mail, Phone, MoreHorizontal, Pencil, Trash2, ChevronDown, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import data from "@/data.json"
@@ -32,43 +32,184 @@ const INIT_NOMINEES = data.slice(0, 2).map((item, i) => {
   }
 }).filter(n => n.name) // Ensure we have a name
 
+import { useDashboard } from "@/components/dashboard/dashboard-context"
+
 export function OwnerNominees() {
-  const [nominees, setNominees] = useState(INIT_NOMINEES)
-  const [expanded, setExpanded] = useState<number | null>(null)
-  const [showAdd, setShowAdd] = useState(false)
+  const { nominees, refreshNominees, isAddingNominee, setIsAddingNominee } = useDashboard()
+  const [expanded, setExpanded] = useState<string | number | null>(null)
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [newRelation, setNewRelation] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newAadhaar, setNewAadhaar] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const MAX_NOMINEES = 2
   const limitReached = nominees.length >= MAX_NOMINEES
 
-  function addNominee(e?: React.FormEvent) {
+  async function addNominee(e?: React.FormEvent) {
     if (e) e.preventDefault()
     
     if (limitReached) {
-      alert("You can only add up to 2 nominees in the current plan.")
-      setShowAdd(false)
+      alert("You have reached the maximum limit of 2 nominees.")
+      setIsAddingNominee(false)
       return
     }
 
-    // Strict email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!newName || !newEmail || !emailRegex.test(newEmail)) {
-      alert("Please enter a valid Full Name and Email Address.")
+    if (!newName || !newEmail || !newPhone || !newAadhaar) {
+      alert("Please fill in all required fields.")
       return
     }
-    setNominees(p => [...p, {
-      id: Date.now(), name: newName,
-      initials: newName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
-      relation: newRelation || "Contact", email: newEmail,
-      phone: "—", status: "pending", access: ["documents"],
-      added: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-      lastNotified: "Never",
-    }])
-    setNewName(""); setNewEmail(""); setNewRelation(""); setShowAdd(false)
+
+    setLoading(true)
+    try {
+      const res = await fetch("/api/nominees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName,
+          email: newEmail,
+          phone: newPhone,
+          aadhaar: newAadhaar,
+          relation: newRelation,
+          access: ["documents"]
+        })
+      })
+      
+      const data = await res.json()
+      if (data.ok) {
+        refreshNominees()
+        setNewName(""); setNewEmail(""); setNewRelation(""); setNewPhone(""); setNewAadhaar("");
+        setIsAddingNominee(false)
+      } else {
+        alert(data.message || "Failed to add nominee")
+      }
+    } catch (err) {
+      alert("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // Display initials helper
+  const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+
+  if (isAddingNominee) {
+    return (
+      <div className="flex h-full flex-col bg-background">
+        <div className="flex items-center gap-4 border-b border-border/40 px-6 py-4">
+          <button onClick={() => setIsAddingNominee(false)} className="rounded-lg p-1.5 hover:bg-muted transition-colors">
+            <Plus className="h-4 w-4 rotate-45" />
+          </button>
+          <div>
+            <h2 className="text-[14px] font-black uppercase tracking-widest text-foreground">Nominee Setup Protocol</h2>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Registering a new beneficiary to the cryptographic inheritance layer</p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-10">
+          <div className="mx-auto max-w-2xl space-y-10">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legal Full Name</label>
+                <input 
+                  autoFocus
+                  placeholder="Rahul Yadav"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Relationship</label>
+                <input 
+                  placeholder="Spouse / Sibling / Child"
+                  value={newRelation}
+                  onChange={(e) => setNewRelation(e.target.value)}
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Certified Email</label>
+                <input 
+                  type="email"
+                  placeholder="rahul@example.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mobile Identification</label>
+                <input 
+                  type="tel"
+                  placeholder="+91 XXXXX XXXXX"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Aadhaar Number (UIDAI)</label>
+                <input 
+                  placeholder="XXXX XXXX XXXX"
+                  value={newAadhaar}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 12)
+                    const parts = val.match(/.{1,4}/g) || []
+                    setNewAadhaar(parts.join(" "))
+                  }}
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold tracking-widest text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date of Birth</label>
+                <input 
+                  type="date"
+                  className="w-full h-12 rounded-xl border border-border/60 bg-muted/20 px-4 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Residential Identification (Address)</label>
+              <textarea 
+                placeholder="Full residential address for legal dispatch"
+                className="w-full rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                rows={3}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-blue-500/10 bg-blue-500/5 p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-blue-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-white">Security Protocol Declaration</h3>
+              </div>
+              <p className="text-[11px] font-medium leading-relaxed text-slate-400 italic">
+                By enrolling this nominee, you authorize Afterlife AI to grant them access to your encrypted vault assets upon successful multi-factor verification (OTP + Biometrics + Secret Question) in the event of your registered passing.
+              </p>
+            </div>
+
+            <div className="pt-6">
+              <button 
+                onClick={addNominee}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-3 h-14 rounded-2xl bg-primary text-primary-foreground text-[12px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all active:scale-[0.98] shadow-2xl disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> Finalize Enrollment & Dispatch Invite</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-border gap-px">
@@ -84,7 +225,7 @@ export function OwnerNominees() {
             if (limitReached) {
               alert("You have reached the maximum limit of 2 nominees.")
             } else {
-              setShowAdd(!showAdd)
+              setIsAddingNominee(!isAddingNominee)
             }
           }}
           disabled={limitReached}
@@ -101,18 +242,19 @@ export function OwnerNominees() {
 
       {/* ── Add form ── */}
       <AnimatePresence>
-        {showAdd && (
+        {isAddingNominee && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden bg-background border-b border-border/40">
             <form onSubmit={addNominee}>
-              <div className="grid gap-4 px-5 py-5 sm:grid-cols-3">
+              <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { label: "Full Name *", value: newName, setter: setNewName, placeholder: "Kavya Sharma. Press enter to save", type: "text", autoFocus: true },
-                  { label: "Email *", value: newEmail, setter: setNewEmail, placeholder: "kavya@example.com", type: "email" },
-                  { label: "Relation", value: newRelation, setter: setNewRelation, placeholder: "Spouse / Child / Sibling", type: "text" },
+                  { label: "Full Name *", value: newName, setter: setNewName, placeholder: "Rahul Verma", type: "text", autoFocus: true },
+                  { label: "Email *", value: newEmail, setter: setNewEmail, placeholder: "rahul@example.com", type: "email" },
+                  { label: "Relationship", value: newRelation, setter: setNewRelation, placeholder: "Brother / Spouse", type: "text" },
+                  { label: "Phone Number", value: "", setter: () => {}, placeholder: "+91 XXXXX XXXXX", type: "tel" },
                 ].map(({ label, value, setter, placeholder, type, autoFocus }) => (
                   <div key={label} className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">{label}</label>
                     <input 
                       type={type}
                       value={value} 
@@ -120,15 +262,16 @@ export function OwnerNominees() {
                       placeholder={placeholder}
                       autoFocus={autoFocus}
                       required={label.includes("*")}
-                      pattern={type === "email" ? "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" : undefined}
-                      className="w-full rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-foreground shadow-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50" 
+                      className="w-full rounded-xl border border-border/60 bg-muted/20 px-4 py-2.5 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50" 
                     />
                   </div>
                 ))}
               </div>
               <div className="flex gap-2 px-5 pb-5">
-                <button type="submit" className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">Send Invite</button>
-                <button type="button" onClick={() => setShowAdd(false)} className="rounded-xl border border-border/50 bg-muted/20 px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground">Cancel</button>
+                <button type="submit" className="rounded-xl bg-primary px-5 py-2.5 text-xs font-black uppercase tracking-widest text-primary-foreground shadow-sm hover:bg-primary/90 transition-all active:scale-[0.98]">
+                  {loading ? "Processing..." : "Enroll & Notify"}
+                </button>
+                <button type="button" onClick={() => setIsAddingNominee(false)} className="rounded-xl border border-border/50 bg-muted/20 px-5 py-2.5 text-xs font-bold text-muted-foreground transition-all hover:bg-muted/40 hover:text-foreground">Cancel</button>
               </div>
             </form>
           </motion.div>
@@ -153,13 +296,13 @@ export function OwnerNominees() {
             >
               {/* Avatar */}
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                {n.initials}
+                {getInitials(n.name)}
               </div>
 
               {/* Name */}
               <div>
                 <p className="text-sm font-medium text-foreground">{n.name}</p>
-                <p className="text-[10px] text-muted-foreground">{n.relation} · Added {n.added}</p>
+                <p className="text-[10px] text-muted-foreground">{n.relation} · Added {new Date(n.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}</p>
               </div>
 
               {/* Contact */}
@@ -170,7 +313,7 @@ export function OwnerNominees() {
 
               {/* Access pills */}
               <div className="flex flex-wrap gap-1">
-                {n.access.slice(0, 2).map((a) => (
+                {n.access.slice(0, 2).map((a: string) => (
                   <span key={a} className="rounded-md border border-border/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
                     {ACCESS_LABELS[a]}
                   </span>
@@ -208,7 +351,7 @@ export function OwnerNominees() {
                     <div className="space-y-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Access Permissions</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {ALL_ACCESS.map((a) => (
+                        {ALL_ACCESS.map((a: string) => (
                           <span key={a} className={`rounded-lg border px-2.5 py-1 text-[10px] font-medium
                             ${n.access.includes(a) ? "border-primary/30 bg-primary/10 text-primary" : "border-border/40 bg-muted/20 text-muted-foreground"}`}>
                             {ACCESS_LABELS[a]}
